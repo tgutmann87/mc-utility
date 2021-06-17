@@ -11,7 +11,7 @@ The utility will always require at least one parameter which is the function to 
 
 ### Install
 **Command:** `python3 mc_utility.py install <pathway>` \
-The install function requires a second parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/`. Next, the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current version of the Minecraft server. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background
+The install function requires a second parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/`. Next, the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current link to download the Minecraft server. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background
 
 ### Backup
 **Command:** `python3 mc_utility.py backup` \
@@ -21,9 +21,15 @@ NOTE: This function will likely be updated in the future to include an argument 
 
 ### Update
 **Command:** `python3 mc_utility.py update` \
+The update function requires no additional parameters and begins the process by shutting down the server. Once shutdown the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current link to download the Minecraft server. After the server is downloaded the server is restarted.
 
 ### Remove
 **Command:** `python3 mc_utility.py remove` \
+The remove function requires no additional parameters and simply removes the following files and directories:
+* The all files/directories located in the server install pathway specified in `mc_utility.info`
+* `/etc/systemd/system/minecraft.service`
+* `/etc/mc_utility.info`
+* `/etc/mcserver_backup.info`
 
 ### DLBackup
 **Command:** `python3 mc_utility.py dlbackup <pathway> <IP/DNS>` \
