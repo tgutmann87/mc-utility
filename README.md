@@ -11,7 +11,7 @@ The utility will always require at least one parameter which is the function to 
 
 ### Install
 **Command:** `python3 mc_utility.py install <pathway>` \
-The install function requires a second parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/`. Next, the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current link to download the Minecraft server. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background
+The install function requires a single parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/`. Next, the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current link to download the Minecraft server. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background
 
 ### Backup
 **Command:** `python3 mc_utility.py backup` \
@@ -32,7 +32,9 @@ The remove function requires no additional parameters and simply removes the fol
 * `/etc/mcserver_backup.info`
 
 ### DLBackup
-**Command:** `python3 mc_utility.py dlbackup <pathway> <IP/DNS>` \
+**Command:** `python3 mc_utility.py dlbackup <pathway> <IP/Domain>` \
+The dlbackup function allows you to download server backups if they're web accessible and it requires two additional parameters. The first specifies the pathway where the server backup will be downloaded to. The second specifies the IP or domain where the servercan be downloaded. If possible the utility will attempt to download the file using a secure connection. 
 
+NOTE: The utility appends a hardcoded file name to the domain provided. The format of the file name is the same that the back up function uses `minecraftServerYYYY-MM-DD.zip`
 ### Unpack
 **Command:** `python3 mc_utility.py unpack <pathway> <ZIP_File_Name>` \
