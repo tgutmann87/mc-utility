@@ -38,3 +38,4 @@ The dlbackup function allows you to download server backups if they're web acces
 NOTE: The utility appends a hardcoded file name to the domain provided. The format of the file name is the same that the back up function uses `minecraftServerYYYY-MM-DD.zip`
 ### Unpack
 **Command:** `python3 mc_utility.py unpack <pathway> <ZIP_File_Name>` \
+
