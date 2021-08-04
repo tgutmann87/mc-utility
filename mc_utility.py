@@ -49,19 +49,18 @@ temp = None
 #Checking the first variable to see what function to execute.
 #FIRST ARGUMENT: Function to execute.
 if sys.argv[1] == "install":
-#SECOND ARGUMENT: Directory to install the server into
 	logging.info("==========Beginning Installation and Configuration of Server==========")
-	logging.info("Core server files will be installed at the following location:  " + sys.argv[2])
+	logging.info("Core server files will be installed at the following location:  " + serverPathway)
 	logging.info("Checking to see if the directory exists.")
 	print("==========Beginning Installation and Configuration of Server==========")
-	print("Core server files will be installed at the following location:  " + sys.argv[2])
+	print("Core server files will be installed at the following location:  " + serverPathway)
 	print("Checking to see if the directory exists.")
 
 	#Creating the directories for the server as well as associated utility files.
 	logging.debug("Creating necessary directory structures.")
-	if not os.path.isdir(sys.argv[2]):
-		logging.debug("Creating " + sys.argv[2])
-		os.makedirs(sys.argv[2])
+	if not os.path.isdir(serverPathway):
+		logging.debug("Creating " + serverPathway)
+		os.makedirs(serverPathway)
 
 	if not os.path.isdir("/etc/mc_utility"):
 		logging.debug("Creating /etc/mc_utility")
@@ -71,7 +70,7 @@ if sys.argv[1] == "install":
 	logging.debug("Moving MC Utility to directory.")
 	os.replace("mc_utility.py", "/etc/mc_utility/mc_utility.py")
 	logging.debug("Switching to the directory where the ser JAR file will be installed.")
-	os.chdir(sys.argv[2])
+	os.chdir(serverPathway)
 	
 	#Downloading the actual JAR file.
 	logging.info("Downloading JAR file from https://minecraft.net.")
@@ -91,7 +90,7 @@ if sys.argv[1] == "install":
 		file.write("After=network.target\n")
 		file.write("[Service]\n")
 		file.write("Type=simple\n")
-		file.write("ExecStart=" + sys.argv[2] + "/start_minecraft_server.sh\n")
+		file.write("ExecStart=" + serverPathway + "/start_minecraft_server.sh\n")
 		file.write("TimeoutStartSec=0\n")
 		file.write("SuccessExitStatus=143")
 		file.write("[Install]\n")
@@ -103,7 +102,7 @@ if sys.argv[1] == "install":
 	file = open("start_minecraft_server.sh", "w")
 	file.write("#!/bin/bash\n")
 	file.write("#Standard Minecraft\n")
-	file.write("cd " + sys.argv[2] + "\n")
+	file.write("cd " + serverPathway + "\n")
 	file.write("exec java -Xmx2G -Xms1G -jar mcserver.jar nogui\n")
 	file.close()
 	
@@ -115,7 +114,7 @@ if sys.argv[1] == "install":
 	file.close()
 	
 	#Writing server location to the configuration file
-	configParser.set("MC_Utility", "server_Location", sys.argv[2])
+	configParser.set("MC_Utility", "server_Location", serverPathway)
 	
 	#Modifying file permissions
 	logging.info("Setting permissions for files.")
