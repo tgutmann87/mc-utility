@@ -11,10 +11,17 @@ The utility will always require at least one parameter which is the function to 
 
 ---
 
+**Configure**\
+Command: `python3 mc_utility.py configure <Property_to_Configure> <Property_Value>`
+
+At this time the configuration command is rather simple and currently allows for easily manipulation of the properties within the `/etc/mc_utility/mc_utility.info` file. The property provided must appear exactly as it does in the `mc_utility.info` file. This command will be updated in future releases to support more functionality.
+
+---
+
 **Install**\
 Command: `python3 mc_utility.py install <pathway>` 
 
-The install function requires a single parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/`. Next, the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current link to download the Minecraft server. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background
+The install function requires a single parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/mc_utility`. Next, the utility will use the Minecraft API at [Minecraft API: Version Manifest](https://launchermeta.mojang.com/mc/game/version_manifest.json) to download the most recent server JAR that has been marked as official release. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background.
 
 ---
 
@@ -30,7 +37,7 @@ NOTE: This function will likely be updated in the future to include an argument 
 **Update**\
 Command: `python3 mc_utility.py update` 
 
-The update function requires no additional parameters and begins the process by shutting down the server. Once shutdown the utility will pull the HTML for the [Minecraft Server Download](https://www.minecraft.net/en-us/download/server) page scraping the most current link to download the Minecraft server. After the server is downloaded the server is restarted.
+The update function requires no additional parameters and begins the process by shutting down the server. Once shutdown the utility will access the Minecraft API at [Minecraft API: Version Manifest](https://launchermeta.mojang.com/mc/game/version_manifest.json) and parse through it to find the most recent server release. Once found the download link is obtained, saved locally and then used to pull the new server JAR. Once the update process is complete the Minecraft server is restarted.
 
 ---
 
@@ -40,8 +47,7 @@ Command: `python3 mc_utility.py remove`
 The remove function requires no additional parameters and simply removes the following files and directories:
 * The all files/directories located in the server install pathway specified in `mc_utility.info`
 * `/etc/systemd/system/minecraft.service`
-* `/etc/mc_utility.info`
-* `/etc/mcserver_backup.info`
+* `/etc/mc_utility/mc_utility.info`
 
 ---
 
@@ -57,4 +63,21 @@ NOTE: The utility appends a hardcoded file name to the domain provided. The form
 **Unpack**\
 Command: `python3 mc_utility.py unpack <pathway> <ZIP_File_Name>` 
 
-The unpack function allows you to unpack a server backup and requires two additional commands. The first parameter is the pathway where the server backup should be unpacked to. If the directory doesn't exist the uitility will create it and any required parents. The pathway will also be stored in the `/etc/mcserver_backup.info`. Additionally, if the directory does exist it will be deleted and re-created with the assumption there was a working version of the server already in that directory. The second parameter is simply the ZIP backup that you'd like to unpack.
+The unpack function allows you to unpack a server backup and requires two additional commands. The first parameter is the pathway where the server backup should be unpacked to. If the directory doesn't exist the uitility will create it and any required parents. The pathway will also be stored in the `/etc/mc_utility/mc_utility.info`. Additionally, if the directory does exist it will be deleted and re-created with the assumption there was a working version of the server already in that directory. The second parameter is simply the ZIP backup that you'd like to unpack.
+
+---
+
+**Properties**\
+Command: `python3 mc_utility.py properties (list/change) <property_to_change> <property_value>`
+
+The properties function has two sepearte sub-functions that can be executed:
+* List - Displayes the Minecraft `server.properties` configuration file.
+* Change - Allows the changing of properties in the `server.properties` configuration file.
+
+When using the change sub-function you will have to specify the property from `server.properties` exactly as it appears in the file. In addition please be aware of the following value restrictions for each type of property:
+* Integer values are restricted to values between 1 and 29,999,984.
+* String values are restricted to 512 characters. Please note any string with spaces will require `""`.
+* Boolean values are restricted to strings `true` or `false`.
+* Values with limited selections (i.e. difficulty) have buit in checks that verrify the value provided matches one within it's set.
+
+---
