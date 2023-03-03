@@ -36,7 +36,7 @@ serverPathway = configParser.get("MC_Utility", "server_Location")
 #logging.basicConfig(filename="/var/log/mc_utility.log", filemode="a", level=configParser.get("MC_Utility", "logging_level"))
 
 #Using the Minecraft API to pull the server JAR.
-if sys.argv[1] == "install" or elif sys.argv[1] == "update":
+if sys.argv[1] == "install" or sys.argv[1] == "update":
 	logging.debug("Using Minecraft API to pull most recent server.jar download link.")
 	temp = json.loads(requests.get("https://launchermeta.mojang.com/mc/game/version_manifest.json").text)
 	for version in temp["versions"]:
