@@ -91,7 +91,7 @@ if sys.argv[1] == "install":
 		file.write("After=network.target\n")
 		file.write("[Service]\n")
 		file.write("Type=simple\n")
-		file.write("ExecStart=/bin/sh -c \"cd " + severPathway + "; exec java -Xmx2G -Xms1G -jar mcserver.jar nogui;\"")
+		file.write("ExecStart=/bin/sh -c \"cd " + serverPathway + "; exec java -Xmx2G -Xms1G -jar mcserver.jar nogui;\"")
 		file.write("TimeoutStartSec=0\n")
 		file.write("SuccessExitStatus=143")
 		file.write("[Install]\n")
