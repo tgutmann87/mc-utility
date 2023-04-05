@@ -1,4 +1,4 @@
-# MC_Utility
+# MC-Utility
 Minecraft Server Management Utility
 
 ## ABOUT
@@ -12,7 +12,7 @@ The utility will always require at least one parameter which is the function to 
 ---
 
 **Install**\
-Command: `python3 mc_utility.py install <pathway>` 
+Command: `install <pathway>` 
 
 The install function requires a single parameter specifying the pathway where the server JAR and related files will be installed. If the directory doesn't exist the utility will create it and any required parents. The specified pathway will then be stored in `mc_utility.info` file locate in `/etc/mc_utility`. Next, the utility will use the Minecraft API at [Minecraft API: Version Manifest](https://launchermeta.mojang.com/mc/game/version_manifest.json) to download the most recent server JAR that has been marked as official release. The server JAR file is then moved to the directory specified and `eula.txt` is created along with `start_minecraft_server.sh`. Once complete `minecraft.service` is created in `/etc/systemd/system` making the server a service that can run in the background.
 
