@@ -13,30 +13,12 @@ import configparser
 class MCUtil:
 	def __init__(self):
 		#Initialize Logging
-		logging.basicConfig(filename="/var/log/mc_utility.log", filemode="a", level=logging.DEBUG)
+		logging.basicConfig(filename="/var/log/mc-utility.log", filemode="a", level=logging.DEBUG)
 		
 		print("==========Welcome to the Minecraft Server Utility!==========")
 		logging.info("==========Welcome to the Minecraft Server Utility!==========")
-		
-		#Initializing ConfigParser
-		self.configParser = configparser.ConfigParser()
-		if os.path.isfile("/etc/mc_utility/mc_utility.info"):
-			logging.debug("File exists! Transferring contents to appropriate variables.")
-			self.configParser.read_file(open("/etc/mc_utility/mc_utility.info", "r"))	
-		else:
-			logging.debug("File doesn't exist! Creating /etc/mc_utility/mc_utility.info.")
-			self.configParser.add_section("MC_Utility")
-			self.configParser.set("MC_Utility", "Server_Location", "/usr/games/minecraft")
-			self.configParser.set("MC_Utility", "Backup_Location", "/var/www/html")
-			self.configParser.set("MC_Utility", "Archive_Location", "")
-			self.configParser.set("MC_Utility", "Logging_Level", "DEBUG")
-			self.configParser.set("MC_Utility", "Certificate_Path", "/etc/mc_utility/MC-Self-Signed.crt")
-			self.configParser.set("MC_Utility", "Private_Key_Path", "/etc/mc_utility/MC-Self-Signed.key")
-			
-			self.configParser.write(open("/etc/mc_utility/mc_utility.info", "w"), space_around_delimiters=False)
-		
-		#Setting server pathway
-		self.serverPathway = self.configParser.get("MC_Utility", "server_Location")
+		#Checking for and creating configuration file if it doesn't exist
+		self.initializeConfigurationFile()
 		
 	def backupServer(self):
 		logging.info("==========Beginning Backup of Server==========")
@@ -48,7 +30,7 @@ class MCUtil:
 		print("Zipping necessary files.")
 		os.chdir(self.serverPathway)
 		shutil.copy("/etc/systemd/system/minecraft.service", self.serverPathway)
-		shutil.make_archive(self.configParser.get("MC_Utility", "backup_Location") + "/minecraftServer" + str(datetime.datetime.now().date()), "zip")
+		shutil.make_archive(self.configParser.get("mc-utility", "backup_Location") + "/minecraftServer" + str(datetime.datetime.now().date()), "zip")
 
 		logging.info("Files have been zipped and sent to web server for download. Restarting the Minecraft server.")
 		print("Files have been zipped and sent to web server for download. Restarting the Minecraft server.")
@@ -166,7 +148,26 @@ class MCUtil:
 		for line in temp:
 			file.write(line)
 		file.close()
-			
+		
+	def createService(self, minRAM, maxRAM):
+		file = open("/etc/systemd/system/minecraft.service", "x")
+		file.write("[Unit]\n")
+		file.write("Description=Minecraft Server\n")
+		file.write("After=network.target\n")
+		file.write("[Service]\n")
+		file.write("Type=simple\n")
+		file.write("ExecStart=/bin/sh -c \"cd " + self.serverPathway + "; exec java -Xmx" + maxRAM + "G -Xms" + minRAM + "G -jar mcserver.jar nogui;\"")
+		file.write("TimeoutStartSec=0\n")
+		file.write("SuccessExitStatus=143")
+		file.write("[Install]\n")
+		file.write("WantedBy=default.target\n")
+		file.close()
+		
+		#Modifying file permissions
+		logging.info("Setting permissions for minecraft.service.")
+		print("Setting permissions for minecraft.service.")
+		os.chmod("/etc/systemd/system/minecraft.service", 0o600) #The '0o' (Zero - Oh) signifies octal numbers proceeding
+		
 	def downloadBackup(self):
 		temp = 0
 		
@@ -184,8 +185,38 @@ class MCUtil:
 		return temp
 		
 	def getConfigurationOption(self, option):
-		return self.configParser.get("MC_Utility", option)
+		return self.configParser.get("mc-utility", option)
 		
+	def initializeConfigurationFile(self):
+		#Initializing ConfigParser
+		self.configParser = configparser.ConfigParser()
+		if os.path.isfile("/etc/mc-utility/mc-utility.info"):
+			logging.debug("File exists! Transferring contents to appropriate variables.")
+			self.configParser.read_file(open("/etc/mc-utility/mc-utility.info", "r"))	
+		else:
+			logging.debug("File doesn't exist! Creating /etc/mc-utility/mc-utility.info.")
+			self.configParser.add_section("mc-utility")
+			self.configParser.set("mc-utility", "Server_Location", "/usr/games/minecraft")
+			self.configParser.set("mc-utility", "Backup_File_Location", "/var/www/html")
+			self.configParser.set("mc-utility", "Archive_Site", "")
+			self.configParser.set("mc-utility", "Logging_Level", "DEBUG")
+			self.configParser.set("mc-utility", "Certificate_Path", "/etc/mc-utility/MC-Self-Signed.crt")
+			self.configParser.set("mc-utility", "Private_Key_Path", "/etc/mc-utility/MC-Self-Signed.key")
+			
+			try:
+				self.configParser.write(open("/etc/mc-utility/mc-utility.info", 'w'), space_around_delimiters=False)
+			except FileNotFoundError:
+				logging.debug("Creating /etc/mc-utility")
+				os.mkdir("/etc/mc-utility")
+			
+		#Setting Class Variables 
+		self.serverPathway = self.configParser.get("mc-utility", "Server_Location")
+		self.backupFilePathway = self.configParser.get("mc-utility", "Backup_File_Location")
+		self.archiveSite = self.configParser.get("mc-utility", "Archive_Site")
+		self.logLevel = self.configParser.get("mc-utility", "Logging_Level")
+		self.certPathway = self.configParser.get("mc-utility", "Certificate_Path")
+		self.privateKeyPathway = self.configParser.get("mc-utility", "Private_Key_Path")
+			
 	def install(self):
 		logging.info("==========Beginning Installation and Configuration of Server==========")
 		logging.info("Core server files will be installed at the following location:  " + self.serverPathway)
@@ -202,14 +233,10 @@ class MCUtil:
 			logging.debug("Creating " + self.serverPathway)
 			os.makedirs(self.serverPathway)
 
-		if not os.path.isdir("/etc/mc_utility"):
-			logging.debug("Creating /etc/mc_utility")
-			os.mkdir("/etc/mc_utility")
-
 		#Switching over to the directory where the server JAR will be installed.
 		logging.debug("Moving MC Utility to directory.")
-		os.replace("mc_utility.py", "/etc/mc_utility/mc_utility.py")
-		os.replace("MCUtil.py", "/etc/mc_utility/MCUtil.py")
+		os.replace("mc-utility.py", "/etc/mc-utility/mc-utility.py")
+		os.replace("MCUtil.py", "/etc/mc-utility/MCUtil.py")
 		logging.debug("Switching to the directory where the ser JAR file will be installed.")
 		os.chdir(self.serverPathway)
 		
@@ -225,18 +252,7 @@ class MCUtil:
 		print("Creating service related files.")
 		logging.debug("Creating /etc/systemd/system/minecraft.service")
 		if not os.path.isfile("/etc/systemd/system/minecraft.service"):
-			file = open("/etc/systemd/system/minecraft.service", "x")
-			file.write("[Unit]\n")
-			file.write("Description=Minecraft Server\n")
-			file.write("After=network.target\n")
-			file.write("[Service]\n")
-			file.write("Type=simple\n")
-			file.write("ExecStart=/bin/sh -c \"cd " + self.serverPathway + "; exec java -Xmx2G -Xms1G -jar mcserver.jar nogui;\"")
-			file.write("TimeoutStartSec=0\n")
-			file.write("SuccessExitStatus=143")
-			file.write("[Install]\n")
-			file.write("WantedBy=default.target\n")
-			file.close()
+			self.createService("1", "2")
 		
 		#Creating eula.txt
 		logging.debug("Creating eula.txt")
@@ -246,17 +262,7 @@ class MCUtil:
 		file.close()
 		
 		#Writing server location to the configuration file
-		self.configParser.set("MC_Utility", "server_Location", self.serverPathway)
-		
-		#Modifying file permissions
-		logging.info("Setting permissions for files.")
-		print("Setting permissions for files.")
-		os.chmod("/etc/systemd/system/minecraft.service", 0o600) #The '0o' (Zero - Oh) signifies octal numbers proceeding
-
-		#logging.info("Writing cronjobs.")
-		#print("Writing cronjobs.")
-		#Code to implement cronjob for server backup
-		#Will be added at a later date	
+		self.configParser.set("mc-utility", "server_Location", self.serverPathway)
 
 		logging.info("Starting the server.")
 		print("Starting the server.")
@@ -264,10 +270,10 @@ class MCUtil:
 		logging.info("Server has been successfully started. Have Fun!!!")
 		print("Server has been successfully started. Have Fun!!!")
 		
-		self.configParser.write(open("/etc/mc_utility/mc_utility.info", "w"), space_around_delimiters=False)
+		self.configParser.write(open("/etc/mc-utility/mc-utility.info", "w"), space_around_delimiters=False)
 		
 	def listConfiguration(self):
-		print(open("/etc/mc_utility/mc_utility.info", "r").read())
+		print(open("/etc/mc-utility/mc-utility.info", "r").read())
 		
 	def listServerProperties(self):	
 		file = open(serverPathway + "/server.properties", "r")
@@ -284,24 +290,24 @@ class MCUtil:
 			print("Removing minecraft.service")
 			os.remove("/etc/systemd/system/minecraft.service")
 		
-		#Removes the server pathway, specified in the mc_utility.info file, if it exists.
+		#Removes the server pathway, specified in the mc-utility.info file, if it exists.
 		if os.path.isdir(self.serverPathway):
 			logging.info("Removing " + self.serverPathway)
 			print("Removing " + self.serverPathway)
 			shutil.rmtree(self.serverPathway)
 
-		#Removes the mc_utility.info file if it exists.
-		if os.path.isfile("/etc/mc_utility/mc_utility.info"):
-			logging.info("Removing /etc/mc_utility/mc_utility.info")
-			print("Removing /etc/mc_utility/mc_utility.info")
-			os.remove("/etc/mc_utility/mc_utility.info")
+		#Removes the mc-utility.info file if it exists.
+		if os.path.isfile("/etc/mc-utility/mc-utility.info"):
+			logging.info("Removing /etc/mc-utility/mc-utility.info")
+			print("Removing /etc/mc-utility/mc-utility.info")
+			os.remove("/etc/mc-utility/mc-utility.info")
 
 		logging.info("Server Removal Complete!")
 		print("Server Removal Complete!")
 		
 	def setConfiguration(self, option, value): 
-		self.configParser.set("MC_Utility", option, value)
-		configParser.write(open("/etc/mc_utility/mc_utility.info", "w"), space_around_delimiters=False)
+		self.configParser.set("mc-utility", option, value)
+		configParser.write(open("/etc/mc-utility/mc-utility.info", "w"), space_around_delimiters=False)
 		
 	def unpackServer(self, pathway, filename):
 		logging.info("==========Beginning Unpack of Server Backup==========")
